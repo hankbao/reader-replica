@@ -1,4 +1,4 @@
-module scrape
+module github.com/hankbao/reader-replica/scrape
 
 go 1.21.6
 
