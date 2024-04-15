@@ -3,74 +3,61 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/aws/aws-sdk-go-v2/config"
+
+	"github.com/hankbao/reader-replica/scrape"
 )
 
 type MyEvent struct {
-	FeedInfo struct {
-		FeedLink string `json:"feedLink"`
-	} `json:"FeedInfo"`
+	Feed  scrape.Feed `json:"Feed"`
+	Links []string    `json:"Links"`
 }
 
-func HandleRequest(ctx context.Context, event *MyEvent) (*string, error) {
-	_, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		log.Panicf("configuration error, " + err.Error())
-	}
+type MyResponse struct {
+	Feed     scrape.Feed       `json:"Feed"`
+	Articles []*scrape.Article `json:"Articles"`
+}
 
+func HandleRequest(ctx context.Context, event *MyEvent) (*[]byte, error) {
 	// Get the Lambda context
 	lc, ok := lambdacontext.FromContext(ctx)
 	if !ok {
-		log.Panic("failed to get Lambda context")
+		log.Panic("Failed to get Lambda context")
 	}
 
 	requestID := lc.AwsRequestID
 
-	fmt.Printf("[%v] Processing message: %s\n", requestID, event.FeedInfo.FeedLink)
+	log.Printf("[%v] Processing message: %s\n", requestID, event.Feed.FeedLink)
 
 	// Process the message
-	data, err := fetchRSS(event.FeedInfo.FeedLink)
+	data, err := fetchRSS(requestID, &event.Feed, event.Links)
 	if err != nil {
-		ret := ""
-		return &ret, err
+		return nil, err
 	}
 
-	fmt.Printf("[%v] Processed data: %s\n", requestID, string(data))
-
-	// // The URL of the second SQS queue
-	// secondQueueURL := "https://sqs.<region>.amazonaws.com/<account_id>/<queue_name>"
-
-	// // Send the message to the second SQS queue
-	// sqsClient := sqs.NewFromConfig(cfg)
-	// _, err = sqsClient.SendMessage(ctx, &sqs.SendMessageInput{
-	// 	QueueUrl:    aws.String(secondQueueURL),
-	// 	MessageBody: aws.String(string(data)),
-	// })
-
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	ret := "Messages processed and sent to the second queue successfully!"
-	return &ret, nil
+	return &data, nil
 }
 
-func fetchRSS(link string) ([]byte, error) {
-	// Your message processing logic here
-	// This is just a dummy example that converts the message to uppercase
-	data := map[string]string{
-		"processed_data": strings.ToUpper(link),
+// Fetch the RSS feed and return the processed data
+func fetchRSS(requestID string, reqFeed *scrape.Feed, links []string) ([]byte, error) {
+	scraper := scrape.NewScraper(30)
+	feed, articles, err := scraper.ScrapeArticles(reqFeed, links)
+	if err != nil {
+		log.Printf("[%v] Failed to scrape articles: %v", requestID, err)
+		return nil, err
 	}
 
+	log.Printf("[%v] Scraped %d articles from feed: %s", requestID, len(articles), reqFeed.FeedLink)
+
 	// Serialize the processed data to JSON
-	return json.Marshal(data)
+	return json.Marshal(MyResponse{
+		Feed:     *feed,
+		Articles: articles,
+	})
 }
 
 func main() {
