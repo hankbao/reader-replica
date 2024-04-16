@@ -21,6 +21,44 @@ func NewScraper(timeout int) *Scraper {
 	}
 }
 
+func (sc *Scraper) ScrapeFeed(link string) (*Feed, error) {
+	log.Printf("start to fetch feed: %s", link)
+
+	resp, err := sc.fetcher.Fetch(link, "", "")
+	if err != nil {
+		log.Printf("failed to fetch feed: %s as %v", link, err)
+		return nil, err
+	}
+
+	if resp == nil {
+		log.Printf("feed not modified since last fetch: %s", link)
+		return nil, nil
+	}
+
+	log.Printf("feed fetched: %s", link)
+	defer func() {
+		ce := resp.Body.Close()
+		if ce != nil {
+			log.Printf("failed to close response body: %v", ce)
+		}
+	}()
+
+	feed, err := sc.parser.Parse(resp.Body)
+	if err != nil {
+		log.Printf("failed to parse feed: %s as %v", link, err)
+		return nil, err
+	}
+
+	log.Printf("feed response parsed: %s", link)
+
+	var f = &Feed{}
+	lastModified := resp.Header.Get("Last-Modified")
+	eTag := resp.Header.Get("ETag")
+	f.UpdateFrom(feed, lastModified, eTag)
+
+	return f, nil
+}
+
 func (sc *Scraper) ScrapeArticles(reqFeed *Feed, linksFetched []string) (*Feed, []*Article, error) {
 	log.Printf("start to fetch feed: %s", reqFeed.FeedLink)
 
