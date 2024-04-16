@@ -10,19 +10,23 @@ import (
 )
 
 type Feed struct {
-	Id            string `json:"_id"`
-	CreatedAt     int    `json:"createdAt,omitempty"`
-	UpdatedAt     int    `json:"updatedAt,omitempty"`
-	Title         string `json:"title,omitempty"`
-	Description   string `json:"description,omitempty"`
-	Language      string `json:"language,omitempty"`
-	Link          string `json:"link,omitempty"`
-	FeedLink      string `json:"feedLink,omitempty"`
-	LastBuildDate string `json:"lastBuildDate,omitempty"`
-	LastBuildAt   int    `json:"lastBuildAt,omitempty"`
-	LastFetchAt   int    `json:"lastFetchAt,omitempty"`
-	LastModified  string `json:"lastModified,omitempty"`
-	ETag          string `json:"eTag,omitempty"`
+	Id            string `json:"id" gorm:"primary_key;column:id"`
+	CreatedAt     int    `json:"createdAt,omitempty" gorm:"column:createdAt"`
+	UpdatedAt     int    `json:"updatedAt,omitempty" gorm:"column:updatedAt"`
+	Title         string `json:"title,omitempty" gorm:"column:title"`
+	Description   string `json:"description,omitempty" gorm:"column:description"`
+	Language      string `json:"language,omitempty" gorm:"column:language"`
+	Link          string `json:"link,omitempty" gorm:"column:link"`
+	FeedLink      string `json:"feedLink,omitempty" gorm:"column:feedLink"`
+	LastBuildDate string `json:"lastBuildDate,omitempty" gorm:"column:lastBuildDate"`
+	LastBuildAt   int    `json:"lastBuildAt,omitempty" gorm:"column:lastBuildAt"`
+	LastFetchAt   int    `json:"lastFetchAt,omitempty" gorm:"column:lastFetchAt"`
+	LastModified  string `json:"lastModified,omitempty" gorm:"column:lastModified"`
+	ETag          string `json:"eTag,omitempty" gorm:"column:eTag"`
+}
+
+func (Feed) TableName() string {
+	return "feeds"
 }
 
 func (feed *Feed) UpdateFrom(rssFeed *rss.Feed, lastModified string, eTag string) {
@@ -44,22 +48,26 @@ func (feed *Feed) UpdateFrom(rssFeed *rss.Feed, lastModified string, eTag string
 }
 
 type Article struct {
-	Id          string    `json:"_id"`
-	CreatedAt   int       `json:"createdAt,omitempty"`
-	UpdatedAt   int       `json:"updatedAt,omitempty"`
-	FeedID      string    `json:"feedId"`
-	Title       string    `json:"title,omitempty"`
-	Link        string    `json:"link,omitempty"`
-	Description string    `json:"description,omitempty"`
-	Content     string    `json:"content,omitempty"`
-	Author      string    `json:"author,omitempty"`
-	Categories  []string  `json:"categories,omitempty"`
-	Comments    string    `json:"comments,omitempty"`
-	Enclosure   Enclosure `json:"enclosure,omitempty"`
-	GUID        string    `json:"guid,omitempty"`
-	PubDate     string    `json:"pubDate,omitempty"`
-	PubAt       int       `json:"pubAt,omitempty"`
-	Source      Source    `json:"source,omitempty"`
+	Id          string    `json:"id" gorm:"primary_key;column:id"`
+	CreatedAt   int       `json:"createdAt,omitempty" gorm:"column:createdAt"`
+	UpdatedAt   int       `json:"updatedAt,omitempty" gorm:"column:updatedAt"`
+	FeedID      string    `json:"feedId" gorm:"column:feedId"`
+	Title       string    `json:"title,omitempty" gorm:"column:title"`
+	Link        string    `json:"link,omitempty" gorm:"column:link"`
+	Description string    `json:"description,omitempty" gorm:"column:description"`
+	Content     string    `json:"content,omitempty" gorm:"column:content"`
+	Author      string    `json:"author,omitempty" gorm:"column:author"`
+	Categories  []string  `json:"categories,omitempty" gorm:"column:categories"`
+	Comments    string    `json:"comments,omitempty" gorm:"column:comments"`
+	Enclosure   Enclosure `json:"enclosure,omitempty" gorm:"column:enclosure"`
+	GUID        string    `json:"guid,omitempty" gorm:"column:guid"`
+	PubDate     string    `json:"pubDate,omitempty" gorm:"column:pubDate"`
+	PubAt       int       `json:"pubAt,omitempty" gorm:"column:pubAt"`
+	Source      Source    `json:"source,omitempty" gorm:"column:source"`
+}
+
+func (Article) TableName() string {
+	return "articles"
 }
 
 func NewArticleFrom(item *rss.Item, feedID string) *Article {
