@@ -26,7 +26,7 @@ func (sc *Scraper) ScrapeArticles(reqFeed *Feed, linksFetched []string) (*Feed, 
 
 	resp, err := sc.fetcher.Fetch(reqFeed.FeedLink, reqFeed.LastModified, reqFeed.ETag)
 	if err != nil {
-		log.Printf("failed to fetch feed: %v as %w", reqFeed, err)
+		log.Printf("failed to fetch feed: %v as %v", reqFeed, err)
 		return nil, nil, err
 	}
 
@@ -45,7 +45,7 @@ func (sc *Scraper) ScrapeArticles(reqFeed *Feed, linksFetched []string) (*Feed, 
 
 	feed, err := sc.parser.Parse(resp.Body)
 	if err != nil {
-		log.Printf("failed to parse feed: %v as %w", reqFeed, err)
+		log.Printf("failed to parse feed: %v as %v", reqFeed, err)
 		return nil, nil, err
 	}
 
